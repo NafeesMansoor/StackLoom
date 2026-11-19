@@ -86,7 +86,7 @@ background, writes the file and opens the browser. The dashboard port comes from
 | 4 | Database adapters, connection manager, explorer, query editor, backups | done (1.0.1) |
 | 5 | CodeCortex management page, graph explorer, "connect to coding agent" (`codecortex install`, per project, opt-in) | done (1.0.1) |
 | 6 | Git dashboard, environment manager, diagnostics, handover reports, backup manager | done (1.0.1) |
-| 7 | Logo and brand, PyPI release, Homebrew tap, install tests | done (1.0.1); publishing waits for a licence and the PyPI/tap accounts |
+| 7 | Logo and brand, PyPI release, Homebrew tap, install tests | done (1.0.1); MIT licence; publishing waits for the PyPI trusted publisher and a tap repository |
 
 ## Performance budget (checked on this Mac before each phase is closed)
 

@@ -2,7 +2,7 @@
 
 ## 1.0.1 (19 Nov 2026)
 
-First release of the rebuilt STACKLOOM: all phases of the brief (0–7).
+First release of the rebuilt STACKLOOM: all phases of the brief (0–7). Released under the MIT licence.
 
 Phases 2–7:
 

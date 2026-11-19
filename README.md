@@ -88,3 +88,7 @@ the package, publishes to PyPI with trusted publishing, then generates the Homeb
 formula, builds it from source and runs its test.
 
 `STACKLOOM_HOME` points STACKLOOM at another data folder, which is useful for tests.
+
+## Licence
+
+MIT. © 2026 Nafees Mansoor ([nafees.info](https://www.nafees.info)). See [LICENSE](LICENSE).

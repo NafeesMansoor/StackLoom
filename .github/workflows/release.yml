@@ -43,13 +43,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generate and validate the formula
-        env:
-          LICENSE_ID: ${{ vars.STACKLOOM_LICENSE }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           for i in 1 2 3 4 5 6; do curl -sf "https://pypi.org/pypi/stackloom/$version/json" >/dev/null && break; sleep 20; done
           mkdir -p tap/Formula
-          python3 scripts/make_formula.py "$version" --license "$LICENSE_ID" > tap/Formula/stackloom.rb
+          python3 scripts/make_formula.py "$version" --license MIT > tap/Formula/stackloom.rb
           brew update-python-resources --exclude-packages numpy tap/Formula/stackloom.rb
           brew install --build-from-source --formula tap/Formula/stackloom.rb
           brew test stackloom
