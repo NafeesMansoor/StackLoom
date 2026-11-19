@@ -57,6 +57,7 @@ jobs:
           for i in 1 2 3 4 5 6; do curl -sf "https://pypi.org/pypi/stackloom/$version/json" >/dev/null && break; sleep 20; done
           # Homebrew only accepts formulae that live in a tap, so use a throwaway local one.
           brew tap-new --no-git local/stackloom
+          brew trust local/stackloom
           tap="$(brew --repository local/stackloom)"
           python3 scripts/make_formula.py "$version" --license MIT > "$tap/Formula/stackloom.rb"
           brew update-python-resources --exclude-packages numpy local/stackloom/stackloom
