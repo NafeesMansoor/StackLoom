@@ -84,8 +84,11 @@ python scripts/api_doc.py                    # docs/API.md
 ```
 
 Releases: push a `v*` tag. `.github/workflows/release.yml` builds the dashboard and
-the package, publishes to PyPI with trusted publishing, then generates the Homebrew
-formula, builds it from source and runs its test.
+the package, tests the wheel in a clean environment and publishes to PyPI with trusted
+publishing. Homebrew only accepts PyPI uploads that are at least a day old, so the
+formula comes a day later: run the Release workflow by hand with the version number. It
+generates the formula, builds it from source, runs its test and attaches the file to
+the run.
 
 `STACKLOOM_HOME` points STACKLOOM at another data folder, which is useful for tests.
 
