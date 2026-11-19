@@ -2,9 +2,15 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch: # re-run only the Homebrew job for a version already on PyPI
+    inputs:
+      version:
+        description: "Version on PyPI, e.g. 1.0.1"
+        required: true
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -39,18 +45,24 @@ jobs:
 
   homebrew:
     needs: pypi
+    if: ${{ !cancelled() && (needs.pypi.result == 'success' || github.event_name == 'workflow_dispatch') }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Generate and validate the formula
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${VERSION#v}"
           for i in 1 2 3 4 5 6; do curl -sf "https://pypi.org/pypi/stackloom/$version/json" >/dev/null && break; sleep 20; done
-          mkdir -p tap/Formula
-          python3 scripts/make_formula.py "$version" --license MIT > tap/Formula/stackloom.rb
-          brew update-python-resources --exclude-packages numpy tap/Formula/stackloom.rb
-          brew install --build-from-source --formula tap/Formula/stackloom.rb
-          brew test stackloom
-          brew audit --formula --strict tap/Formula/stackloom.rb || true
+          # Homebrew only accepts formulae that live in a tap, so use a throwaway local one.
+          brew tap-new --no-git local/stackloom
+          tap="$(brew --repository local/stackloom)"
+          python3 scripts/make_formula.py "$version" --license MIT > "$tap/Formula/stackloom.rb"
+          brew update-python-resources --exclude-packages numpy local/stackloom/stackloom
+          brew install --build-from-source local/stackloom/stackloom
+          brew test local/stackloom/stackloom
+          brew audit --strict local/stackloom/stackloom || true
+          mkdir -p out && cp "$tap/Formula/stackloom.rb" out/
       - uses: actions/upload-artifact@v4
-        with: { name: homebrew-formula, path: tap/Formula/stackloom.rb }
+        with: { name: homebrew-formula, path: out/stackloom.rb }
