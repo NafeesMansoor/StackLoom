@@ -102,8 +102,9 @@ def test_external_app_is_shown_not_stopped(conn, tmp_path, pool):
     other = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
-        for _ in range(30):
-            if runtime.port_in_use(port):
+        # wait until the stand-in app answers, not merely binds; cold CI runners are slow
+        for _ in range(150):
+            if all(runtime.check_health(s) == "healthy" for s in runtime.resolved_services(conn, project)):
                 break
             time.sleep(0.1)
         assert runtime.status(conn, project)["state"] == "external"
