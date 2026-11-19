@@ -1,0 +1,58 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: pnpm install --frozen-lockfile && pnpm build
+        working-directory: frontend
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python -m pip install build && python -m build
+      - name: Install the wheel in a clean environment and smoke-test it
+        run: |
+          python -m venv /tmp/clean && /tmp/clean/bin/pip install dist/*.whl
+          STACKLOOM_HOME=/tmp/sl /tmp/clean/bin/stackloom --version
+          STACKLOOM_HOME=/tmp/sl /tmp/clean/bin/stackloom init --workspace "$PWD"
+          unzip -l dist/*.whl | grep -q "stackloom/web/dist/index.html"
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: dist/ }
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write # trusted publishing; no API token stored
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  homebrew:
+    needs: pypi
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate and validate the formula
+        env:
+          LICENSE_ID: ${{ vars.STACKLOOM_LICENSE }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for i in 1 2 3 4 5 6; do curl -sf "https://pypi.org/pypi/stackloom/$version/json" >/dev/null && break; sleep 20; done
+          mkdir -p tap/Formula
+          python3 scripts/make_formula.py "$version" --license "$LICENSE_ID" > tap/Formula/stackloom.rb
+          brew update-python-resources --exclude-packages numpy tap/Formula/stackloom.rb
+          brew install --build-from-source --formula tap/Formula/stackloom.rb
+          brew test stackloom
+          brew audit --formula --strict tap/Formula/stackloom.rb || true
+      - uses: actions/upload-artifact@v4
+        with: { name: homebrew-formula, path: tap/Formula/stackloom.rb }
